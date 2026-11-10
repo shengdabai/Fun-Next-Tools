@@ -1,5 +1,7 @@
 'use client'
 
+import { copyText } from '@/lib/clipboard'
+
 import { useState, useCallback, useRef } from 'react'
 import { splitIntoThread, SplitOptions } from '@/lib/splitter'
 
@@ -28,18 +30,7 @@ function CopyButton({ text, label = 'Copy' }: { text: string; label?: string }) 
   const [copied, setCopied] = useState(false)
 
   const handleCopy = useCallback(async () => {
-    try {
-      await navigator.clipboard.writeText(text)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 1500)
-    } catch {
-      // fallback
-      const el = document.createElement('textarea')
-      el.value = text
-      document.body.appendChild(el)
-      el.select()
-      document.execCommand('copy')
-      document.body.removeChild(el)
+    if (await copyText(text)) {
       setCopied(true)
       setTimeout(() => setCopied(false), 1500)
     }
@@ -80,16 +71,9 @@ export default function Home() {
     setHasGenerated(true)
   }, [inputText, maxChars, numberingStyle, intro])
 
-  const handleCopyAll = useCallback(() => {
+  const handleCopyAll = useCallback(async () => {
     const all = tweets.map((t) => t.content).join('\n\n---\n\n')
-    navigator.clipboard.writeText(all).catch(() => {
-      const el = document.createElement('textarea')
-      el.value = all
-      document.body.appendChild(el)
-      el.select()
-      document.execCommand('copy')
-      document.body.removeChild(el)
-    })
+    await copyText(all)
   }, [tweets])
 
   // Drag handlers

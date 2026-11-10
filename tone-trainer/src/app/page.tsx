@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { getDailyWords, getRandomWords, TONE_INFO, type ToneWord } from '@/data/words'
 import { loadBest as readBest, saveBest as writeBest } from '@/lib/best'
+import { copyText } from '@/lib/clipboard'
 
 type Mode = 'daily' | 'practice'
 type GameState = 'playing' | 'answered' | 'complete'
@@ -119,12 +120,10 @@ export default function Home() {
 
   const shareText = `声调闯关 Tone Trainer\n今日: ${score}分 | 准确率: ${accuracy}% | 连击: ${bestStreak}\n每天练习，声调不再难！`
 
-  function handleShare() {
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(shareText).then(() => {
-        setCopied(true)
-        setTimeout(() => setCopied(false), 2000)
-      })
+  async function handleShare() {
+    if (await copyText(shareText)) {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
     }
   }
 

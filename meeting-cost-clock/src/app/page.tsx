@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
+import { copyText } from '@/lib/clipboard'
 import {
   IDLE_TIMER,
   TimerState,
@@ -192,13 +193,13 @@ function MeetingCostApp() {
     }
   }
 
-  function handleShare() {
+  async function handleShare() {
     const minutes = Math.floor(elapsed / 60)
     const text = `Our ${minutes}-min meeting just cost ${formatCost(totalCost, currency)}. Was it worth it? 🤔 Calculate yours → ${window.location.origin}?people=${people}&salary=${salary}`
-    navigator.clipboard.writeText(text).then(() => {
+    if (await copyText(text)) {
       setShowToast(true)
       setTimeout(() => setShowToast(false), 2500)
-    })
+    }
   }
 
   // Equivalents

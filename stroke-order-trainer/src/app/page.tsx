@@ -13,8 +13,22 @@ export default function Home() {
   const [autoPlay, setAutoPlay] = useState(false)
   const [notFound, setNotFound] = useState(false)
   const autoRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const stepRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  function cancelAnimation() {
+    if (stepRef.current !== null) clearTimeout(stepRef.current)
+    if (autoRef.current !== null) clearTimeout(autoRef.current)
+    stepRef.current = null
+    setIsAnimating(false)
+    setAutoPlay(false)
+  }
+
+  useEffect(() => () => {
+    if (stepRef.current !== null) clearTimeout(stepRef.current)
+  }, [])
 
   function loadChar(char: string) {
+    cancelAnimation()
     const data = getCharData(char)
     if (data) {
       setCharData(data)
@@ -38,21 +52,24 @@ export default function Home() {
   }
 
   function nextStroke() {
-    if (!charData) return
+    if (!charData || autoPlay || stepRef.current !== null) return
     if (currentStroke >= charData.strokes.length) return
     setIsAnimating(true)
-    setTimeout(() => {
+    stepRef.current = setTimeout(() => {
+      stepRef.current = null
       setIsAnimating(false)
       setCurrentStroke(s => s + 1)
     }, 700)
   }
 
   function prevStroke() {
+    cancelAnimation()
     setCurrentStroke(s => Math.max(0, s - 1))
     setIsAnimating(false)
   }
 
   function reset() {
+    cancelAnimation()
     setCurrentStroke(0)
     setIsAnimating(false)
     setAutoPlay(false)
@@ -60,6 +77,7 @@ export default function Home() {
 
   function showAll() {
     if (!charData) return
+    cancelAnimation()
     setCurrentStroke(charData.strokes.length)
     setIsAnimating(false)
     setAutoPlay(false)
@@ -148,7 +166,7 @@ export default function Home() {
                 <button
                   className="btn-primary"
                   onClick={() => setAutoPlay(true)}
-                  disabled={autoPlay || currentStroke >= charData.strokes.length}
+                  disabled={autoPlay || isAnimating || currentStroke >= charData.strokes.length}
                 >
                   ▶ 动画
                 </button>

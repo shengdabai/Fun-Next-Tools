@@ -1,7 +1,9 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { generateHTML, downloadHTML } from '@/lib/export'
+import { parseProfile } from '@/lib/profile'
+import { copyText } from '@/lib/clipboard'
 import type { LinkItem, Profile } from '@/lib/export'
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -139,13 +141,14 @@ export default function Home() {
   const [activeTheme, setActiveTheme] = useState<ThemeName>('Dark')
   const [copied, setCopied] = useState(false)
   const [hydrated, setHydrated] = useState(false)
+  const savedProfile = useRef<Profile>(DEFAULT_PROFILE)
 
   // Load from localStorage after mount
   useEffect(() => {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY)
-      if (saved) {
-        const parsed = JSON.parse(saved) as Profile
+      const parsed = parseProfile(localStorage.getItem(STORAGE_KEY))
+      if (parsed) {
+        savedProfile.current = parsed
         setProfile(parsed)
         // Try to detect active theme
         const match = THEME_NAMES.find(
@@ -161,9 +164,10 @@ export default function Home() {
 
   // Auto-save to localStorage
   useEffect(() => {
-    if (!hydrated) return
+    if (!hydrated || profile === savedProfile.current) return
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(profile))
+      savedProfile.current = profile
     } catch {
       // ignore
     }
@@ -223,18 +227,7 @@ export default function Home() {
 
   const handleCopy = useCallback(async () => {
     const html = generateHTML(profile)
-    try {
-      await navigator.clipboard.writeText(html)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    } catch {
-      // fallback
-      const ta = document.createElement('textarea')
-      ta.value = html
-      document.body.appendChild(ta)
-      ta.select()
-      document.execCommand('copy')
-      document.body.removeChild(ta)
+    if (await copyText(html)) {
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     }

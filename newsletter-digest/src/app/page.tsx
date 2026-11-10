@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { MOCK_FEEDS, type FeedSource, type Article } from '@/lib/mockFeeds'
+import { copyText } from '@/lib/clipboard'
 import {
   generateDigestHTML,
   generateDigestMarkdown,
@@ -119,18 +120,20 @@ export default function Home() {
     }, 600)
   }
 
-  function handleCopyHTML() {
+  async function handleCopyHTML() {
     if (!digestFeeds) return
     const config: DigestConfig = { title, subtitle, articlesPerFeed, timeRange }
     const html = generateDigestHTML(config, digestFeeds)
-    navigator.clipboard.writeText(html).then(() => showToast('HTML copied to clipboard!'))
+    const copied = await copyText(html)
+    showToast(copied ? 'HTML copied to clipboard!' : 'Unable to copy. Check clipboard permissions.')
   }
 
-  function handleCopyMarkdown() {
+  async function handleCopyMarkdown() {
     if (!digestFeeds) return
     const config: DigestConfig = { title, subtitle, articlesPerFeed, timeRange }
     const md = generateDigestMarkdown(config, digestFeeds)
-    navigator.clipboard.writeText(md).then(() => showToast('Markdown copied to clipboard!'))
+    const copied = await copyText(md)
+    showToast(copied ? 'Markdown copied to clipboard!' : 'Unable to copy. Check clipboard permissions.')
   }
 
   function handleDownloadHTML() {
